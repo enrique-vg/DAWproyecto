@@ -15,7 +15,11 @@ class ProgresoController extends Controller
         $fecha   = $request->query('fecha')
             ? Carbon::parse($request->query('fecha'))
             : Carbon::now();
-
+        \Illuminate\Support\Facades\Log::info('Progreso request', [
+            'periodo' => $periodo,
+            'fecha'   => $fecha->toDateTimeString(),
+            'tz'      => $fecha->timezoneName,
+        ]);
         $user = $request->user();
 
         // Total global del usuario
@@ -37,9 +41,17 @@ class ProgresoController extends Controller
         // Datos del gráfico según periodo
         [$labels, $datos] = $this->calcularGrafico($user, $periodo, $fecha);
 
+        // return response()->json([
+        //     'totalSesiones' => $totalSesiones,
+        //     'totalTiempo'   => (int) $totalTiempo,
+        //     'grafico'       => [
+        //         'labels' => $labels,
+        //         'datos'  => $datos,
+        //     ],
+        // ]);
         return response()->json([
             'totalSesiones' => $totalSesiones,
-            'totalTiempo'   => (int) $totalTiempo,
+            'totalTiempo'   => (float) $totalTiempo,
             'grafico'       => [
                 'labels' => $labels,
                 'datos'  => $datos,
@@ -63,6 +75,19 @@ class ProgresoController extends Controller
     }
 
     // Semana: lunes a domingo de la semana que contiene $fecha
+    // private function graficoSemana(\App\Models\User $user, Carbon $fecha): array
+    // {
+    //     $labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    //     $inicio = $fecha->copy()->startOfWeek(Carbon::MONDAY);
+
+    //     $datos = [];
+    //     for ($i = 0; $i < 7; $i++) {
+    //         $dia    = $inicio->copy()->addDays($i);
+    //         $datos[] = $this->minutosTrabajoEnDia($user, $dia);
+    //     }
+
+    //     return [$labels, $datos];
+    // }
     private function graficoSemana(\App\Models\User $user, Carbon $fecha): array
     {
         $labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -70,13 +95,17 @@ class ProgresoController extends Controller
 
         $datos = [];
         for ($i = 0; $i < 7; $i++) {
-            $dia    = $inicio->copy()->addDays($i);
-            $datos[] = $this->minutosTrabajoEnDia($user, $dia);
+            $dia     = $inicio->copy()->addDays($i);
+            $minutos = $this->minutosTrabajoEnDia($user, $dia);
+            \Illuminate\Support\Facades\Log::info("Dia $i", [
+                'dia'     => $dia->toDateString(),
+                'minutos' => $minutos,
+            ]);
+            $datos[] = $minutos;
         }
 
         return [$labels, $datos];
     }
-
     // Día: franjas de 2 horas (00h, 02h, ... 22h)
     private function graficoDia(\App\Models\User $user, Carbon $fecha): array
     {
@@ -160,17 +189,34 @@ class ProgresoController extends Controller
 
     //     return (int) $minutos;
     // }
+    // private function minutosTrabajoEnRango(\App\Models\User $user, Carbon $desde, Carbon $hasta): int
+    // {
+    //     $minutos = \App\Models\Sesion::query()
+    //         ->where('sesiones.usuario_id', $user->id)
+    //         ->whereBetween('sesiones.fechaInicio', [$desde, $hasta])
+    //         ->where('sesiones.completado', true)
+    //         ->join('periodos', 'sesiones.id', '=', 'periodos.sesion_id')
+    //         ->where('periodos.tipo', 'TRABAJO')
+    //         ->where('periodos.completado', true)
+    //         ->sum('periodos.duracion');
+
+    //     return (int) $minutos;
+    // }
     private function minutosTrabajoEnRango(\App\Models\User $user, Carbon $desde, Carbon $hasta): int
     {
         $minutos = \App\Models\Sesion::query()
             ->where('sesiones.usuario_id', $user->id)
-            ->whereBetween('sesiones.fechaInicio', [$desde, $hasta])
+            ->whereBetween('sesiones.fechaInicio', [
+                $desde->format('Y-m-d H:i:s'),
+                $hasta->format('Y-m-d H:i:s'),
+            ])
             ->where('sesiones.completado', true)
             ->join('periodos', 'sesiones.id', '=', 'periodos.sesion_id')
             ->where('periodos.tipo', 'TRABAJO')
             ->where('periodos.completado', true)
             ->sum('periodos.duracion');
 
-        return (int) $minutos;
+        // return (int) $minutos;
+        return (float) $minutos;
     }
 }
