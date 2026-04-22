@@ -16,9 +16,12 @@ class Configuracion extends Model
     ];
 
     protected $casts = [
-        'tiempoTrabajo'       => 'integer',
-        'tiempoDescanso'      => 'integer',
-        'tiempoDescansoLargo' => 'integer',
+        // 'tiempoTrabajo'       => 'integer',
+        // 'tiempoDescanso'      => 'integer',
+        // 'tiempoDescansoLargo' => 'integer',
+        'tiempoTrabajo'       => 'float',
+        'tiempoDescanso'      => 'float',
+        'tiempoDescansoLargo' => 'float',
     ];
 
     // Ocultamos campos de auditoría del JSON que ve el frontend

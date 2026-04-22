@@ -31,25 +31,36 @@ class User extends Authenticatable
     ];
 
     // ─── Accessor: expone es_premium como esPremium en JSON ───────────────────
-    protected function esPremium(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => $this->es_premium,
-        );
-    }
+    // protected function esPremium(): Attribute
+    // {
+    //     return Attribute::make(
+    //         get: fn() => $this->es_premium,
+    //     );
+    // }
 
     // Sobreescribimos toArray para que el JSON use esPremium (camelCase)
+    // public function toArray(): array
+    // {
+    //     $array = parent::toArray();
+
+    //     // Añadimos la versión camelCase y eliminamos la snake_case
+    //     $array['esPremium'] = $this->es_premium;
+    //     unset($array['es_premium']);
+
+    //     return $array;
+    // }
     public function toArray(): array
     {
         $array = parent::toArray();
 
-        // Añadimos la versión camelCase y eliminamos la snake_case
-        $array['esPremium'] = $this->es_premium;
-        unset($array['es_premium']);
+        // Renombrar es_premium → esPremium para el frontend
+        if (array_key_exists('es_premium', $array)) {
+            $array['esPremium'] = (bool) $array['es_premium'];
+            unset($array['es_premium']);
+        }
 
         return $array;
     }
-
     // ─── Relaciones ───────────────────────────────────────────────────────────
     public function configuracion()
     {

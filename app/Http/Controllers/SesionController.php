@@ -71,13 +71,15 @@ class SesionController extends Controller
 
         $data = $request->validate([
             'tipo'       => ['required', 'in:TRABAJO,DESCANSO_CORTO,DESCANSO_LARGO'],
-            'duracion'   => ['required', 'integer', 'min:1'],
+            // 'duracion'   => ['required', 'integer', 'min:1'],
+            'duracion' => ['required', 'numeric', 'min:0.1'],
             'completado' => ['required', 'boolean'],
         ], [
             'tipo.required'       => 'El tipo de periodo es obligatorio.',
             'tipo.in'             => 'El tipo debe ser TRABAJO, DESCANSO_CORTO o DESCANSO_LARGO.',
             'duracion.required'   => 'La duración es obligatoria.',
-            'duracion.integer'    => 'La duración debe ser un número entero.',
+            // 'duracion.integer'    => 'La duración debe ser un número entero.',
+            'duracion.numeric' => 'La duración debe ser un número.',
             'completado.required' => 'El campo completado es obligatorio.',
         ]);
 

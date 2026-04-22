@@ -17,7 +17,8 @@ class Periodo extends Model
 
     protected $casts = [
         'completado' => 'boolean',
-        'duracion'   => 'integer',
+        // 'duracion'   => 'integer',
+        'duracion' => 'float',
     ];
 
     public function sesion()

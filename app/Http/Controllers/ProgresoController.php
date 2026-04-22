@@ -21,13 +21,19 @@ class ProgresoController extends Controller
         // Total global del usuario
         $totalSesiones = $user->sesiones()->where('completado', true)->count();
 
-        $totalTiempo = $user->sesiones()
-            ->where('completado', true)
+        // $totalTiempo = $user->sesiones()
+        //     ->where('completado', true)
+        //     ->join('periodos', 'sesiones.id', '=', 'periodos.sesion_id')
+        //     ->where('periodos.tipo', 'TRABAJO')
+        //     ->where('periodos.completado', true)
+        //     ->sum('periodos.duracion');
+        $totalTiempo = \App\Models\Sesion::query()
+            ->where('sesiones.usuario_id', $user->id)
+            ->where('sesiones.completado', true)
             ->join('periodos', 'sesiones.id', '=', 'periodos.sesion_id')
             ->where('periodos.tipo', 'TRABAJO')
             ->where('periodos.completado', true)
             ->sum('periodos.duracion');
-
         // Datos del gráfico según periodo
         [$labels, $datos] = $this->calcularGrafico($user, $periodo, $fecha);
 
@@ -108,8 +114,20 @@ class ProgresoController extends Controller
     // Año: enero a diciembre
     private function graficoAnio(\App\Models\User $user, Carbon $fecha): array
     {
-        $labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-                   'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        $labels = [
+            'Ene',
+            'Feb',
+            'Mar',
+            'Abr',
+            'May',
+            'Jun',
+            'Jul',
+            'Ago',
+            'Sep',
+            'Oct',
+            'Nov',
+            'Dic'
+        ];
         $datos  = [];
 
         for ($m = 1; $m <= 12; $m++) {
@@ -131,10 +149,23 @@ class ProgresoController extends Controller
         );
     }
 
+    // private function minutosTrabajoEnRango(\App\Models\User $user, Carbon $desde, Carbon $hasta): int
+    // {
+    //     $minutos = $user->sesiones()
+    //         ->whereBetween('fechaInicio', [$desde, $hasta])
+    //         ->join('periodos', 'sesiones.id', '=', 'periodos.sesion_id')
+    //         ->where('periodos.tipo', 'TRABAJO')
+    //         ->where('periodos.completado', true)
+    //         ->sum('periodos.duracion');
+
+    //     return (int) $minutos;
+    // }
     private function minutosTrabajoEnRango(\App\Models\User $user, Carbon $desde, Carbon $hasta): int
     {
-        $minutos = $user->sesiones()
-            ->whereBetween('fechaInicio', [$desde, $hasta])
+        $minutos = \App\Models\Sesion::query()
+            ->where('sesiones.usuario_id', $user->id)
+            ->whereBetween('sesiones.fechaInicio', [$desde, $hasta])
+            ->where('sesiones.completado', true)
             ->join('periodos', 'sesiones.id', '=', 'periodos.sesion_id')
             ->where('periodos.tipo', 'TRABAJO')
             ->where('periodos.completado', true)
